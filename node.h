@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <arpa/inet.h>
 
 #ifndef __node_h__
@@ -10,6 +11,7 @@ typedef enum {
 } STATE;
 
 typedef struct NODE {
+	bool udp;
 	int sock;
 	struct sockaddr_in address;
 
@@ -21,11 +23,12 @@ typedef struct NODE {
 	struct NODE *next;
 } NODE;
 
-NODE *node_malloc(int sock, struct sockaddr_in address);
+NODE *node_malloc(bool udp, int sock, struct sockaddr_in address);
 void node_free(NODE *node);
 
 NODE *node_getFirst();
 NODE *node_queryById(const char *id);
+NODE *node_queryByAddress(bool udp, struct sockaddr_in address);
 
 void node_update(NODE *node);
 time_t node_getPast(NODE *node);

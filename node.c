@@ -36,11 +36,12 @@ void node_delete(NODE *node) {
 		end = prev;
 }
 
-NODE *node_malloc(int sock, struct sockaddr_in address) {
+NODE *node_malloc(bool udp, int sock, struct sockaddr_in address) {
 	NODE *node = malloc(sizeof(NODE));
 	if(node == NULL)
 		return NULL;
 
+	node->udp = udp;
 	node->sock = sock;
 	node->address = address;
 
@@ -63,6 +64,15 @@ NODE *node_getFirst() {
 NODE *node_queryById(const char *id) {
 	for(NODE *node = end; node; node = node->prev) {
 		if(strcmp(node->id, id) == 0)
+			return node;
+	}
+
+	return NULL;
+}
+
+NODE *node_queryByAddress(bool udp, struct sockaddr_in address) {
+	for(NODE *node = head; node; node = node->next) {
+		if((node->udp == udp) && (memcmp(&node->address, &address, sizeof(struct sockaddr_in)) == 0))
 			return node;
 	}
 

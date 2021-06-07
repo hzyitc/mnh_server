@@ -1,4 +1,4 @@
-#include "server.h"
+#include "tcpServer.h"
 #include "epoll.h"
 #include "log.h"
 #include "node.h"
@@ -7,7 +7,7 @@
 #include <string.h>
 #include <errno.h>
 
-int server_create(int port) {
+int tcpServer_create(int port) {
 	int fd = socket(AF_INET, SOCK_STREAM, 0);
 	if(fd < 0)
 		return -1;
@@ -35,7 +35,7 @@ int server_create(int port) {
 	return fd;
 }
 
-void server_handle(int epoll_fd, int server_fd) {
+void tcpServer_handle(int epoll_fd, int server_fd) {
 	struct sockaddr_in address;
 	int addrlen = sizeof(address);
 
@@ -46,7 +46,7 @@ void server_handle(int epoll_fd, int server_fd) {
 	}
 	log_i("accepted %d from %s:%d", new_fd, inet_ntoa(address.sin_addr), ntohs(address.sin_port));
 
-	NODE *node = node_malloc(new_fd, address);
+	NODE *node = node_malloc(false, new_fd, address);
 	if(node == NULL) {
 		log_e("node_create error: %d(%s)", errno, strerror(errno));
 		close(new_fd);

@@ -2,7 +2,8 @@
 #include "epoll.h"
 #include "node.h"
 #include "client.h"
-#include "server.h"
+#include "tcpServer.h"
+#include "udpServer.h"
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -33,13 +34,23 @@ int main(int argc, char const *argv[])
 		return 1;
 	}
 
-	int server_fd = server_create(port);
-	if(server_fd < 0) {
-		log_e("server_create error %d: %s", errno, strerror(errno));
+	int tcpServer_fd = tcpServer_create(port);
+	if(tcpServer_fd < 0) {
+		log_e("tcpServer_create error %d: %s", errno, strerror(errno));
 		return 1;
 	}
-	if(epoll_add(epoll_fd, server_fd, 0) < 0) {
-		log_e("add server to epoll error %d: %s", errno, strerror(errno));
+	if(epoll_add(epoll_fd, tcpServer_fd, &tcpServer_fd) < 0) {
+		log_e("add tcp server to epoll error %d: %s", errno, strerror(errno));
+		return 1;
+	}
+
+	int udpServer_fd = udpServer_create(port);
+	if(udpServer_fd < 0) {
+		log_e("udpServer_create error %d: %s", errno, strerror(errno));
+		return 1;
+	}
+	if(epoll_add(epoll_fd, udpServer_fd, &udpServer_fd) < 0) {
+		log_e("add udp server to epoll error %d: %s", errno, strerror(errno));
 		return 1;
 	}
 
@@ -59,8 +70,10 @@ int main(int argc, char const *argv[])
 		}
 
 		for(int i = 0; i < ready; i++) {
-			if(evs[i].data.ptr == NULL)
-				server_handle(epoll_fd, server_fd);
+			if(evs[i].data.ptr == &tcpServer_fd)
+				tcpServer_handle(epoll_fd, tcpServer_fd);
+			else if(evs[i].data.ptr == &udpServer_fd)
+				udpServer_handle(epoll_fd, udpServer_fd);
 			else {
 				NODE *node = evs[i].data.ptr;
 
